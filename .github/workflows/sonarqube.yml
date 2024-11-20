@@ -40,8 +40,8 @@ jobs:
       # Step 6: SonarQube Scan (run the analysis on the code)
       - name: SonarQube Scan
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}        
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }} 
+          SONAR_TOKEN: ${ secrets.SONAR_TOKEN }        
+          SONAR_HOST_URL: ${ secrets.SONAR_HOST_URL }
         run: |
           sonar-scanner \
             -Dsonar.projectKey=sonarqube-integration-test \
