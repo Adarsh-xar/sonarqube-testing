@@ -1,68 +1,62 @@
-name: Terraform and SonarQube Analysis
-
+name: SonarQube Integration Pipeline
 
 on:
   push:
     branches:
-      - main
-  pull_request:
-    branches:
-      - main
+      - main  # Adjust to your preferred branch
 
 jobs:
-  terraform_apply_and_sonarqube_scan:
+  build:
     runs-on: ubuntu-latest
-
+    
     services:
       sonar:
         image: sonarqube:latest
         ports:
-          - 9000:9000  
-        options: --health-cmd="curl -f http://localhost:9000/api/system/health" --health-interval=10s --health-timeout=5s --health-retries=5
+          - 9000:9000  # Expose SonarQube port on 9000
+        options: --health-cmd="curl -f http://localhost:9000/api/system/health" \
+                 --health-interval=10s --health-timeout=30s --health-retries=5
+        # Ensures SonarQube is ready before proceeding
 
     steps:
-     
-      - name: Checkout Code
+      # Step 1: Checkout the code
+      - name: Checkout code
         uses: actions/checkout@v2
 
-      # Step 2: Set up Terraform
+      # Step 2: Set up Terraform (if not already set up in your pipeline)
       - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v2
+        uses: hashicorp/setup-terraform@v1
         with:
-          terraform_version: 1.5.0
+          terraform_version: 1.3.9  # Use preferred version
 
-      
-      - name: Terraform Init
+      # Step 3: Initialize Terraform
+      - name: Initialize Terraform
         run: terraform init
 
-      # Step 4: Wait for SonarQube to be available
-      - name: Wait for SonarQube to be available
+      # Step 4: Apply Terraform configuration to create the SonarQube project
+      - name: Apply Terraform Configuration
+        run: terraform apply -auto-approve
+
+      # Step 5: Wait for SonarQube to be ready
+      - name: Wait for SonarQube to be ready
         run: |
-          while ! curl -s ${{ secrets.SONAR_HOST_URL }}; do
-            echo "Waiting for SonarQube to be available..."
+          for i in {1..30}; do
+            if curl -s http://localhost:9000/api/system/health; then
+              echo "SonarQube is ready!"
+              break
+            fi
+            echo "Waiting for SonarQube..."
             sleep 10
           done
 
-      
-      - name: Terraform Apply
-        run: terraform apply -auto-approve
-
-      
-      - name: Set up JDK (if using Java)
-        uses: actions/setup-java@v2
-        with:
-          java-version: '11'
-
-      
-      - name: SonarQube Scan
-        env:
-          SONAR_USERNAME: ${{ secrets.SONAR_USERNAME }}  
-          SONAR_PASSWORD: ${{ secrets.SONAR_PASSWORD }}  
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}  
+      # Step 6: Run SonarQube Scan (using username and password for authentication)
+      - name: Run SonarQube Scan
         run: |
-          sonar-scanner \
-            -Dsonar.projectKey=sonarqube-integration-test \
-            -Dsonar.sources=. \
-            -Dsonar.host.url=$SONAR_HOST_URL \
-            -Dsonar.login=$SONAR_USERNAME \
-            -Dsonar.password=$SONAR_PASSWORD
+          curl -u admin:admin -X POST "http://localhost:9000/api/sonarqube/scan"  # Replace with your actual scan URL
+          # Replace "admin:admin" with your actual username and password in SonarQube
+
+      # Step 7: Optional: Check SonarQube Project Status
+      - name: Check SonarQube Project Status
+        run: |
+          curl -u admin:admin "http://localhost:9000/api/qualitygates/project_status?projectKey=${{ secrets.SONARQUBE_PROJECT_KEY }}"
+          # Replace with your actual username/password and project key
