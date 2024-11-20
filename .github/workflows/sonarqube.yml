@@ -13,23 +13,39 @@ jobs:
   terraform_apply_and_sonarqube_scan:
     runs-on: ubuntu-latest
 
+    services:
+      sonar:
+        image: sonarqube:latest
+        ports:
+          - 9000:9000  
+        options: --health-cmd="curl -f http://localhost:9000/api/system/health" --health-interval=10s --health-timeout=5s --health-retries=5
+
     steps:
-      
+     
       - name: Checkout Code
         uses: actions/checkout@v2
 
-      
+      # Step 2: Set up Terraform
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.5.0  
+          terraform_version: 1.5.0
+
       
       - name: Terraform Init
         run: terraform init
 
+      # Step 4: Wait for SonarQube to be available
+      - name: Wait for SonarQube to be available
+        run: |
+          while ! curl -s ${{ secrets.SONAR_HOST_URL }}; do
+            echo "Waiting for SonarQube to be available..."
+            sleep 10
+          done
+
       
       - name: Terraform Apply
-        run: terraform apply -auto-approve  
+        run: terraform apply -auto-approve
 
       
       - name: Set up JDK (if using Java)
@@ -37,14 +53,16 @@ jobs:
         with:
           java-version: '11'
 
-      # Step 6: SonarQube Scan (run the analysis on the code)
+      
       - name: SonarQube Scan
         env:
-          SONAR_TOKEN: ${ secrets.SONAR_TOKEN }        
-          SONAR_HOST_URL: ${ secrets.SONAR_HOST_URL }
+          SONAR_USERNAME: ${{ secrets.SONAR_USERNAME }}  
+          SONAR_PASSWORD: ${{ secrets.SONAR_PASSWORD }}  
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}  
         run: |
           sonar-scanner \
             -Dsonar.projectKey=sonarqube-integration-test \
             -Dsonar.sources=. \
             -Dsonar.host.url=$SONAR_HOST_URL \
-            -Dsonar.login=$SONAR_TOKEN
+            -Dsonar.login=$SONAR_USERNAME \
+            -Dsonar.password=$SONAR_PASSWORD
