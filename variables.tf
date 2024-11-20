@@ -16,12 +16,12 @@ variable "sonarqube_host" {
   default     = "http://localhost:9000"  
 }
 
-variable "sonarqube_token" {
-  description = "The SonarQube authentication token"
-  type        = string
-  sensitive   = true
+# variable "sonarqube_token" {
+#   description = "The SonarQube authentication token"
+#   type        = string
+#   sensitive   = true
  # default     = "sqa07537e5f15b6396a61de8144769b935424c3709"  
-}
+#}
 
 variable "project_name" {
   description = "The name of the project"
