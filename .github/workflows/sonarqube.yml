@@ -1,62 +1,56 @@
-name: SonarQube Integration Pipeline
+name: SonarQube Analysis with Terraform
 
 on:
   push:
     branches:
-      - main  # Adjust to your preferred branch
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  build:
+  sonarqube:
     runs-on: ubuntu-latest
-    
-    services:
-      sonar:
-        image: sonarqube:latest
-        ports:
-          - 9000:9000  # Expose SonarQube port on 9000
-        options: --health-cmd="curl -f http://localhost:9000/api/system/health" \
-                 --health-interval=10s --health-timeout=30s --health-retries=5
-        # Ensures SonarQube is ready before proceeding
 
     steps:
-      # Step 1: Checkout the code
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      # Step 2: Set up Terraform (if not already set up in your pipeline)
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v1
-        with:
-          terraform_version: 1.3.9  # Use preferred version
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: 1.5.4  
 
-      # Step 3: Initialize Terraform
-      - name: Initialize Terraform
-        run: terraform init
+    - name: Configure Terraform
+      run: |
+        terraform init
 
-      # Step 4: Apply Terraform configuration to create the SonarQube project
-      - name: Apply Terraform Configuration
-        run: terraform apply -auto-approve
+    - name: Apply Terraform to create SonarQube project
+      run: |
+        terraform apply -auto-approve
+      env:
+        SONARQUBE_HOST: ${{ secrets.SONARQUBE_HOST }}
+        SONARQUBE_USERNAME: ${{ secrets.SONARQUBE_USERNAME }}
+        SONARQUBE_PASSWORD: ${{ secrets.SONARQUBE_PASSWORD }}
 
-      # Step 5: Wait for SonarQube to be ready
-      - name: Wait for SonarQube to be ready
-        run: |
-          for i in {1..30}; do
-            if curl -s http://localhost:9000/api/system/health; then
-              echo "SonarQube is ready!"
-              break
-            fi
-            echo "Waiting for SonarQube..."
-            sleep 10
-          done
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16'  
 
-      # Step 6: Run SonarQube Scan (using username and password for authentication)
-      - name: Run SonarQube Scan
-        run: |
-          curl -u admin:admin -X POST "http://localhost:9000/api/sonarqube/scan"  # Replace with your actual scan URL
-          # Replace "admin:admin" with your actual username and password in SonarQube
+    - name: Install dependencies
+      run: |
+        npm install  # Or use yarn install if you're using Yarn
 
-      # Step 7: Optional: Check SonarQube Project Status
-      - name: Check SonarQube Project Status
-        run: |
-          curl -u admin:admin "http://localhost:9000/api/qualitygates/project_status?projectKey=${{ secrets.SONARQUBE_PROJECT_KEY }}"
-          # Replace with your actual username/password and project key
+    - name: Run SonarQube scanner
+      uses: sonarsource/sonarcloud-github-action@v2
+      with:
+        projectKey: your_project_key  
+        organization: your_organization  
+      env:
+        SONAR_HOST_URL: ${{ secrets.SONARQUBE_HOST }}
+        SONAR_LOGIN: ${{ secrets.SONARQUBE_USERNAME }}
+        SONAR_PASSWORD: ${{ secrets.SONARQUBE_PASSWORD }}
+        SONAR_SCANNER_PARAMS: |
+          sonar.sources=.
+          sonar.inclusions=**/app.js
