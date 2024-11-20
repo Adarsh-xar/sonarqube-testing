@@ -1,0 +1,50 @@
+name: Terraform and SonarQube Analysis
+
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  terraform_apply_and_sonarqube_scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0  
+      
+      - name: Terraform Init
+        run: terraform init
+
+      
+      - name: Terraform Apply
+        run: terraform apply -auto-approve  
+
+      
+      - name: Set up JDK (if using Java)
+        uses: actions/setup-java@v2
+        with:
+          java-version: '11'
+
+      # Step 6: SonarQube Scan (run the analysis on the code)
+      - name: SonarQube Scan
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}        
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }} 
+        run: |
+          sonar-scanner \
+            -Dsonar.projectKey=sonarqube-integration-test \
+            -Dsonar.sources=. \
+            -Dsonar.host.url=$SONAR_HOST_URL \
+            -Dsonar.login=$SONAR_TOKEN

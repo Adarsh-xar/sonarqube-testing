@@ -6,18 +6,26 @@ terraform {
   }
 }
 
+# provider "sonarqube" {
+#     token  = "sqa_e5254aa3c164ce7c0f721302926d8599d9594db7"
+#     host   = "http://127.0.0.1:9000"
+# }
+
+
 provider "sonarqube" {
-    token  = "sqa_e5254aa3c164ce7c0f721302926d8599d9594db7"
-    host   = "http://127.0.0.1:9000"
+  user   = var.sonarqube_user
+  pass   = var.sonarqube_password
+  host   = var.sonarqube_host
+  token  = var.sonarqube_token  
 }
 
 
-# provider "sonarqube" {
-#   user   = var.sonarqube_user
-#   pass   = var.sonarqube_password
-#   host   = var.sonarqube_host
+provider "sonarqube" {
+  user   = var.sonarqube_user
+  pass   = var.sonarqube_password
+  host   = var.sonarqube_host
 #   token  = var.sonarqube_token  
-# }
+ }
 
 resource "sonarqube_project" "my_project" {
   name       = var.project_name
