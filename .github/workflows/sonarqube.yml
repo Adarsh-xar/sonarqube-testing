@@ -29,9 +29,9 @@ jobs:
       run: |
         terraform apply -auto-approve
       env:
-        SONARQUBE_HOST: ${{ secrets.SONARQUBE_HOST }}
-        SONARQUBE_USERNAME: ${{ secrets.SONARQUBE_USERNAME }}
-        SONARQUBE_PASSWORD: ${{ secrets.SONARQUBE_PASSWORD }}
+        SONARQUBE_HOST: ${ secrets.SONARQUBE_HOST }
+        SONARQUBE_USERNAME: ${ secrets.SONARQUBE_USERNAME }
+        SONARQUBE_PASSWORD: ${ secrets.SONARQUBE_PASSWORD }
 
     - name: Set up Node.js
       uses: actions/setup-node@v3
@@ -44,13 +44,11 @@ jobs:
 
     - name: Run SonarQube scanner
       uses: sonarsource/sonarcloud-github-action@v2
-      with:
-        projectKey: your_project_key  
-        organization: your_organization  
+       
       env:
-        SONAR_HOST_URL: ${{ secrets.SONARQUBE_HOST }}
-        SONAR_LOGIN: ${{ secrets.SONARQUBE_USERNAME }}
-        SONAR_PASSWORD: ${{ secrets.SONARQUBE_PASSWORD }}
+        SONAR_HOST_URL: ${ secrets.SONARQUBE_HOST }
+        SONAR_LOGIN: ${ secrets.SONARQUBE_USERNAME }
+        SONAR_PASSWORD: ${ secrets.SONARQUBE_PASSWORD }
         SONAR_SCANNER_PARAMS: |
           sonar.sources=.
           sonar.inclusions=**/app.js
