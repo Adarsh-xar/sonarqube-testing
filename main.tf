@@ -23,7 +23,7 @@ terraform {
 provider "sonarqube" {
   user   = var.sonarqube_user
   pass   = var.sonarqube_password
-  host   = var.sonarqube_host
+   host  = "http://host.docker.internal:9000"
 #   token  = var.sonarqube_token  
  }
 
