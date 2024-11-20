@@ -12,12 +12,12 @@ terraform {
 # }
 
 
-provider "sonarqube" {
-  user   = var.sonarqube_user
-  pass   = var.sonarqube_password
-  host   = var.sonarqube_host
-  token  = var.sonarqube_token  
-}
+# provider "sonarqube" {
+#   user   = var.sonarqube_user
+#   pass   = var.sonarqube_password
+#   host   = var.sonarqube_host
+#   token  = var.sonarqube_token  
+# }
 
 
 provider "sonarqube" {
